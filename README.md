@@ -4,7 +4,7 @@ This plugin allows you to authenticate and access user's Google Drive account, u
 
 ## Installation
 
-### Prerequistics
+### Development and Contribution Set Up Prerequistics
 ``
 $ git clone https://github.com/JcDenton86/cordova-plugin-jc-googledrive.git
 ``
@@ -18,9 +18,11 @@ $ git clone https://github.com/JcDenton86/cordova-plugin-jc-googledrive.git
     * On Android: Paste the SHA1 fingerprint into the form where requested (on iOS skip this)
         * read more under "Get an Android certificate and register your application", [here](https://developers.google.com/drive/android/get-started)
     * Click Create.
-3. `cd development && cordova platform add android`. Hereafter you can work with `development/platforms/android` in Android Studio.
+3. `cd development && npm install -g cordova` (Check for cordova updates)
+4. `cordova platform add android`. Hereafter you can work with `development/platforms/android` in Android Studio.
+4. (Use the credentials from step 2): `cordova platform add ios -variable IOS_REVERSED_CLIENT_ID=com.googleusercontent.apps.YOUR_CLIENT_ID --variable IOS_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com`.
 
-### Install with cordova-cli
+### Integrating into with Your Project  cordova-cli
 
 If you are using [cordova-cli](https://github.com/apache/cordova-cli), install
 with:
