@@ -21,7 +21,7 @@ function displayFileList(files) {
     for (var i = files.length - 1; i >= 0; i--) {
         var file = files[i];
         output += "<p class='file-entry'>Name: " + file.name + ", " + file.modifiedTime;
-        output += ", ID: " + file.id.slice(0, 15) + "…"
+        output += ", ID: " + file.id.slice(0, 15) + "&hellip;"
         output += "<button class='file-download-btn' data-driveid='"+file.id+"'>Download File</button></p>";
     }
     output += "</div>";
@@ -55,7 +55,7 @@ var app = {
     clickedListFiles: function(event) {
         var appDirectory = false;
         var resultElement = document.getElementsByClassName('drive-result')[0];
-        resultElement.innerHTML = "Listing files…";
+        resultElement.innerHTML = "Listing files&hellip;";
 
         // Rely on displayFileList to ingest the file list and output HTML
         // Then add event listeners to allow download operatiosn occur.
@@ -76,7 +76,7 @@ var app = {
     clickedUploadFile: function(event) {
         var appDirectory = false;
         var resultElement = document.getElementsByClassName('drive-result')[0];
-        resultElement.innerHTML = "Uploading file…";
+        resultElement.innerHTML = "Uploading file&hellip;";
 
         window.plugins.gdrive.uploadFile(JSON.stringify(event), appDirectory,
             function(success) {
@@ -91,7 +91,7 @@ var app = {
         // Android-only
         var returnFiles = false;
         var resultElement = document.getElementsByClassName('drive-result')[0];
-        resultElement.innerHTML = "Requesting sync…";
+        resultElement.innerHTML = "Requesting sync&hellip;";
 
         window.plugins.gdrive.requestSync(returnFiles,
             function(success) {

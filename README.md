@@ -14,10 +14,11 @@ $ git clone https://github.com/JcDenton86/cordova-plugin-jc-googledrive.git
     
     * Click Create credentials > OAuth client ID.
     * Select Android or iOS.
-    * In the Package name field (or Bundle ID for iOS), enter your app's package name.
+    * In the Package name field (or Bundle ID for iOS), enter your app's package name. (For devlopment you may be able to re-use `gr.jcdenton.GoogleDriveDevelopment`—it _cannot_ collide with the production `gr.jcdenton.GoogleDrive`).
     * On Android: Paste the SHA1 fingerprint into the form where requested (on iOS skip this)
         * read more under "Get an Android certificate and register your application", [here](https://developers.google.com/drive/android/get-started)
     * Click Create.
+    * To recap you provide Google with the Package Name Or Bundle ID and are given a Client ID.
 3. `cd development && npm install -g cordova` (Check for cordova updates)
 4. `cordova platform add android`. Hereafter you can work with `development/platforms/android` in Android Studio.
 4. (Use the credentials from step 2): `cordova platform add ios -variable IOS_REVERSED_CLIENT_ID=com.googleusercontent.apps.YOUR_CLIENT_ID --variable IOS_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com`.
@@ -29,17 +30,17 @@ with:
 
     cordova plugin add cordova-plugin-jc-googledrive --variable IOS_REVERSED_CLIENT_ID=com.googleusercontent.apps.YOUR_CLIENT_ID --variable IOS_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com
     
-The IOS_REVERSED_CLIENT_ID is the "iOS URL Scheme" on the Google Developer's Console. The variables are only for iOS platform. You can omit them if you are developing for Android.
+The IOS_REVERSED_CLIENT_ID is the "iOS URL Scheme" on the Google Developer's Console. The variables are only for iOS platform. You can omit them when developing for Android.
 
-##### Read only for iOS
+##### iOS Build Error `currentAuthorizationFlow' not found on object of type 'AppDelegate`
 
 This plugin requires some additions to make it work on __iOS__ properly:
 
-Firstly, make sure you have installed [cocoapods](https://cocoapods.org/) because it is needed to install some dependencies using `pod`. 
+First, make sure you have installed [cocoapods](https://cocoapods.org/) because it is needed to install some dependencies using `pod`. 
 
-Secondly and after succesfull installation of the dependencies:
+Second and after succesfull installation of the dependencies:
 
-Open `AppDelegate.m` file and add 1) these header files along with the rest on the top and 2) the code block before the `@end` command:
+Open `AppDelegate.m` implementation file and add 1) these import statements along with the rest on the top and 2) the code block before the `@end` command:
 
 ```
 #import "AppAuth.h"
@@ -62,13 +63,14 @@ Open `AppDelegate.m` file and add 1) these header files along with the rest on t
 @end
 
 ```
-Open `AppDelegate.h` file and paste this code before the `@end` command :
+
+Then open `AppDelegate.h` file and add this property:
+
 ```
 @protocol OIDAuthorizationFlowSession;
 
 @interface AppDelegate : CDVAppDelegate {}
 @property(nonatomic, strong, nullable) id<OIDAuthorizationFlowSession> currentAuthorizationFlow;
-
 ```
 
 That's it! You are ready to use the plugin. 
