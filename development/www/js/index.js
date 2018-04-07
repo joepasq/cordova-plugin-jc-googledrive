@@ -21,12 +21,20 @@ function displayFileList(files) {
     for (var i = files.length - 1; i >= 0; i--) {
         var file = files[i];
         output += "<p class='file-entry'>Name: " + file.name + ", " + file.modifiedTime;
-        output += ", ID: " + file.id.slice(0, 15) + "&hellip;"
+        output += ", ID: " + file.id.slice(0, 15) + "&hellip;";
         output += "<button class='file-download-btn' data-driveid='"+file.id+"'>Download File</button></p>";
     }
     output += "</div>";
     return output;
 }
+
+// Will hold the google drive plugin status messages
+var statusElement = document.getElementsByClassName('drive-status')[0];
+
+var triage = function(message) {
+    statusElement.innerHTML = message;
+    console.log("gdrive triage() " + message);
+};
 
 var app = {
     // Application Constructor
@@ -76,14 +84,14 @@ var app = {
     clickedUploadFile: function(event) {
         var appDirectory = false;
         var resultElement = document.getElementsByClassName('drive-result')[0];
-        resultElement.innerHTML = "Uploading file&hellip;";
+        resultElement.innerHTML = "Uploading file from " + JSON.stringify(event) + "&hellip;";
 
         window.plugins.gdrive.uploadFile(JSON.stringify(event), appDirectory,
             function(success) {
                 resultElement.innerHTML = "Upload success: <br><pre>" + JSON.stringify(success) + "</pre>";
             },
             function(error) {
-                resultElement.innerHTML = "Upload error: <br><pre>" + JSON.stringify(success) + "</pre>";
+                resultElement.innerHTML = "Upload error: <br><pre>" + JSON.stringify(error) + "</pre>";
         });
     },
 
@@ -102,6 +110,46 @@ var app = {
         });
     },
 
+    captureAndUploadImage: function(images) {
+        console.log("This is " + this);
+        triage("C.1 captureAndUploadImage called with " + images + ", " + JSON.stringify(images) + ".");
+
+        var appDirectory = false;
+        var resultElement = document.getElementsByClassName('drive-result')[0];
+        resultElement.innerHTML = "C.1 Capturing image&hellip;";
+
+        var captureError = function(message) {
+            triage("C.2 Failed to take image:<br>" + JSON.stringify(message));
+        };
+
+        var captureSuccess = function(mediaFiles) {
+            resultElement.innerHTML = "C.2" + JSON.stringify(mediaFiles);
+            var i, path, len;
+            for (i = 0, len = mediaFiles.length; i < len; i += 1) {
+                path = mediaFiles[i].fullPath;
+
+                window.resolveLocalFileSystemURL(path, function(success) {
+                    triage("C.3 Successfully resolved: " + JSON.stringify(success));
+                    resultElement.innerHTML = "C.3 Successfully resolved: " + JSON.stringify(success) + "\nNow uploading&hellip;";
+
+                    window.plugins.gdrive.uploadFile(success.nativeURL, appDirectory,
+                        function(success) {
+                            resultElement.innerHTML = "Upload success: <br><pre>" + JSON.stringify(success) + "</pre>";
+                        },
+                        function(error) {
+                            resultElement.innerHTML = "Upload error: <br><pre>" + JSON.stringify(error) + "</pre>";
+                    });
+                },
+                function(error) {
+                    triage("C.3 Failed to resolve " + JSON.stringify(error));
+                });
+            }
+        };
+
+        var imageCaptureOptions = { limit: 1 };
+        navigator.device.capture.captureImage(captureSuccess, captureError, imageCaptureOptions);
+    },
+
     // Update DOM on a Received Event
     receivedEvent: function (id) {
         var parentElement = document.getElementById(id);
@@ -112,8 +160,6 @@ var app = {
         receivedElement.setAttribute('style', 'display:block;');
 
         // Google Drive Development Interface
-        var statusElement = document.getElementsByClassName('drive-status')[0];
-
         if (window.plugins.gdrive !== undefined) {
             statusElement.setAttribute('style', 'display:block;');
             statusElement.innerHTML = "gdrive global plugin loaded";
@@ -130,6 +176,9 @@ var app = {
 
         var uploadFileButton = document.getElementsByClassName('drive-uploadFile')[0];
         uploadFileButton.addEventListener('click', this.clickedUploadFile, false);
+
+        var captureUploadImageButton = document.getElementsByClassName('drive-captureAndUploadImage')[0];
+        captureUploadImageButton.addEventListener('click', this.captureAndUploadImage, false);
     }
 };
 
