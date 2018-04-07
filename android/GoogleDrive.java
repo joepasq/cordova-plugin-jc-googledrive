@@ -228,11 +228,12 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                   public void run() {
                       try {
                           listOfFiles = args.getBoolean(0);
-                          if (mGoogleApiClient.isConnected())
+                          if (mGoogleApiClient.isConnected()) {
                               requestSync(listOfFiles);
-                          else
+                          } else {
                               mGoogleApiClient.connect();
-                      }catch (JSONException ex){
+                          }
+                      } catch(JSONException ex) {
                           callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,ex.getLocalizedMessage()));
                       }
                   }
@@ -476,11 +477,13 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             @Override
             public void onResult(@NonNull Status status) {
                 if (!status.isSuccess()) {
-                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,status+""));
+                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, status.toString()));
                 }
-                if(listOfFiles) {
+                if (listOfFiles) {
                     //after syncing with Google Drive fetch files from private app's folder
                     fileList(true);
+                } else {
+                    mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, status.toString()));
                 }
             }
         });
