@@ -3,13 +3,14 @@
 #import <GTMAppAuth/GTMAppAuth.h>
 #import "GTLRUtilities.h"
 #import "AppDelegate.h"
+#import <MobileCoreServices/MobileCoreServices.h>
 
 
 static NSString *kClientID = @"";
 static NSString *kRedirectURI = @":/oauthredirect";
 static NSString *kAuthorizerKey = @"";
 
-@interface GoogleDrive () <OIDAuthStateChangeDelegate,OIDAuthStateErrorDelegate>
+@interface GoogleDrive () <OIDAuthStateChangeDelegate, OIDAuthStateErrorDelegate>
 @property (nonatomic, readonly) GTLRDriveService *driveService;
 @end
 
@@ -33,12 +34,12 @@ static NSString *kAuthorizerKey = @"";
 {
     NSString* destPath = [command.arguments objectAtIndex:0];
     NSString* fileid = [command.arguments objectAtIndex:1];
-    if([destPath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length>0){
+    if ([destPath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length > 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if(self.authorization.canAuthorize){
-                    [self downloadAFile:command destPath:destPath fid:fileid];
-                    NSLog(@"Already authorized app. No need to ask user again");
-            } else{
+            if (self.authorization.canAuthorize) {
+				[self downloadAFile:command destPath:destPath fid:fileid];
+				NSLog(@"Already authorized app. No need to ask user again");
+            } else {
                 [self runSigninThenHandler:command onComplete:^{
                     [self downloadAFile:command destPath:destPath fid:fileid];
                 }];
@@ -80,10 +81,10 @@ static NSString *kAuthorizerKey = @"";
 
     BOOL appfolder = [[command.arguments objectAtIndex:0] boolValue];
     dispatch_async(dispatch_get_main_queue(), ^{
-        if(self.authorization.canAuthorize){
+        if (self.authorization.canAuthorize) {
             [self fetchFileList:command appFolder:appfolder];
             NSLog(@"Already authorized app. No need to ask user again");
-        } else{
+        } else {
             [self runSigninThenHandler:command onComplete:^{
                 [self fetchFileList:command appFolder:appfolder];
             }];
@@ -185,9 +186,8 @@ static NSString *kAuthorizerKey = @"";
         }];
 }
 
-
--(void)uploadAFile:(CDVInvokedUrlCommand *)command fpath:(NSString *)fpath appFolder:(BOOL)appfolder {
-
+- (void)uploadAFile:(CDVInvokedUrlCommand *)command fpath:(NSString *)fpath appFolder:(BOOL)appfolder {
+	/* Locate file-to-upload from the app-container's tmp directory */
 	/// Accept fpath `file:///var/mobile/Containers/Data/Application/{UUID}/tmp/{filename}`
 	/// Then transform it into file:///private/var/mobile/Containers/Data/Application/{UIUD}/tmp/{filename}
 	NSString *tempDir = NSTemporaryDirectory();
@@ -200,23 +200,36 @@ static NSString *kAuthorizerKey = @"";
 		return;
     }
 	
+	/* Detect the MIME type */
+	NSString *discoveredMimeType = @"application/octet-stream";;
+	
+	// Source from https://stackoverflow.com/a/5998683
+	CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[fpath pathExtension], NULL);
+	CFStringRef mimeType = UTTypeCopyPreferredTagWithClass(UTI, kUTTagClassMIMEType);
+	CFRelease(UTI);
+	if (mimeType) {
+		discoveredMimeType = (__bridge NSString *)mimeType;
+		CFRelease(mimeType);
+	}
 
-    GTLRDriveService *service = self.driveService;
 
-    GTLRUploadParameters *uploadParameters =
-    [GTLRUploadParameters uploadParametersWithFileURL:localResourcePath
-                                             MIMEType:@"application/octet-stream"];
+	/* Prepare the upload data */
+	GTLRDriveService *service = self.driveService;
+    GTLRUploadParameters *uploadParameters = [GTLRUploadParameters uploadParametersWithFileURL:localResourcePath
+																					  MIMEType:discoveredMimeType];
 
     uploadParameters.useBackgroundSession = YES;
 
-    GTLRDrive_File *backUpFile = [GTLRDrive_File object];
+	
+    GTLRDrive_File *newFileResource = [GTLRDrive_File object];
 	if (appfolder) {
-        backUpFile.parents = @[@"appDataFolder"];
+        newFileResource.parents = @[@"appDataFolder"];
 	}
-    backUpFile.name = [fpath lastPathComponent];
+    newFileResource.name = [fpath lastPathComponent];
+	newFileResource.mimeType = discoveredMimeType;
     //NSLog(@"%@", backUpFile.name);
 
-    GTLRDriveQuery_FilesCreate *query = [GTLRDriveQuery_FilesCreate queryWithObject:backUpFile
+    GTLRDriveQuery_FilesCreate *query = [GTLRDriveQuery_FilesCreate queryWithObject:newFileResource
 																   uploadParameters:uploadParameters];
 
     //TODO: show native progress indicator
@@ -227,6 +240,7 @@ static NSString *kAuthorizerKey = @"";
 //        double doubleValue = (double)numberOfBytesRead;
 //    };
 
+	/* Execute the upload */
 	[service executeQuery:query
 		completionHandler:^(GTLRServiceTicket *callbackTicket,
 							GTLRDrive_File *uploadedFile,

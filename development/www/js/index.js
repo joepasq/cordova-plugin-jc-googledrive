@@ -149,7 +149,7 @@ var app = {
 
                 window.resolveLocalFileSystemURL(path, function(success) {
                     triage("C.3 Successfully resolved: " + JSON.stringify(success));
-                    resultElement.innerHTML = "C.3 Successfully resolved: " + JSON.stringify(success) + "\nNow uploading&hellip;";
+                    resultElement.innerHTML = "C.3 Successfully resolved: " + JSON.stringify(success) + "\nNow will-upload&hellip;";
 
                     window.plugins.gdrive.uploadFile(success.nativeURL, appDirectory,
                         function(success) {

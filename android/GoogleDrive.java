@@ -385,6 +385,10 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 });
     }
 
+    /*
+        Please see this documentation for information about dealing with MIME types
+        and Google-specific MIME types https://developers.google.com/drive/v3/web/manage-uploads#importing_to_google_docs_types_wzxhzdk18wzxhzdk19
+     */
     private void fileList(final boolean appFolder) {
         /* Please be aware of Google app specific MIME types: https://developers.google.com/drive/v3/web/mime-types */
         Query.Builder qb = new Query.Builder();
@@ -486,7 +490,8 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, status.toString()));
                 }
                 if (listOfFiles) {
-                    //after syncing with Google Drive fetch files from private app's folder
+                    // After syncing with Google Drive fetch files from private app's folder
+                    // which will run its own callback context sendPluginResult.
                     fileList(true);
                 } else {
                     mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, status.toString()));
