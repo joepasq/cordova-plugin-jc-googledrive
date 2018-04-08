@@ -137,11 +137,15 @@ var app = {
             triage("C.2 Failed to take image:<br>" + JSON.stringify(error));
         };
 
+        var iosPathPrefix = "file://";
         var captureSuccess = function(mediaFiles) {
             resultElement.innerHTML = "C.2" + JSON.stringify(mediaFiles);
             var i, path, len;
             for (i = 0, len = mediaFiles.length; i < len; i += 1) {
                 path = mediaFiles[i].fullPath;
+                if (path.startsWith(iosPathPrefix) === false) {
+                    path = iosPathPrefix + path;
+                }
 
                 window.resolveLocalFileSystemURL(path, function(success) {
                     triage("C.3 Successfully resolved: " + JSON.stringify(success));
@@ -156,7 +160,7 @@ var app = {
                     });
                 },
                 function(error) {
-                    triage("C.3 Failed to resolve " + JSON.stringify(error));
+                    triage("C.3 Failed to resolve " + JSON.stringify(error) + " for path " + path);
                 });
             }
         };

@@ -187,31 +187,33 @@ static NSString *kAuthorizerKey = @"";
 
 -(void)uploadAFile:(CDVInvokedUrlCommand *)command fpath:(NSString *)fpath appFolder:(BOOL)appfolder {
 
-    NSURL *fileToUploadURL = [NSURL fileURLWithPath:fpath];
-    NSLog(@"%@", fileToUploadURL);
-
+	/// Accept fpath `file:///var/mobile/Containers/Data/Application/{UUID}/tmp/{filename}`
+	/// Then transform it into file:///private/var/mobile/Containers/Data/Application/{UIUD}/tmp/{filename}
+	NSString *tempDir = NSTemporaryDirectory();
+	NSURL *localResourcePath = [NSURL fileURLWithPath:[tempDir stringByAppendingPathComponent:fpath.lastPathComponent] isDirectory:NO];
+	
     NSError *fileError;
-    if (![fileToUploadURL checkPromisedItemIsReachableAndReturnError:&fileError]) {
+    if ([localResourcePath checkPromisedItemIsReachableAndReturnError:&fileError] == false || fileError != nil) {
         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[@"No Local File Found: " stringByAppendingString:fpath]]
                                     callbackId:command.callbackId];
 		return;
     }
-    //NSString *libs = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex: 0];
-    //NSLog(@"Detected Library path: %@", libs);
+	
 
     GTLRDriveService *service = self.driveService;
 
     GTLRUploadParameters *uploadParameters =
-    [GTLRUploadParameters uploadParametersWithFileURL:fileToUploadURL
+    [GTLRUploadParameters uploadParametersWithFileURL:localResourcePath
                                              MIMEType:@"application/octet-stream"];
 
     uploadParameters.useBackgroundSession = YES;
 
     GTLRDrive_File *backUpFile = [GTLRDrive_File object];
-    if(appfolder)
+	if (appfolder) {
         backUpFile.parents = @[@"appDataFolder"];
+	}
     backUpFile.name = [fpath lastPathComponent];
-    //NSLog(@"%@",backUpFile.name);
+    //NSLog(@"%@", backUpFile.name);
 
     GTLRDriveQuery_FilesCreate *query =
     [GTLRDriveQuery_FilesCreate queryWithObject:backUpFile
