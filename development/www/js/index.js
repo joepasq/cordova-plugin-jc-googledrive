@@ -16,13 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 function displayFileList(files) {
     var output = "<div>";
+    var wrapProperty = function(property) {
+        return "<span class='file-property'>" + property + "</span>";
+    }
+
     for (var i = files.length - 1; i >= 0; i--) {
         var file = files[i];
-        output += "<p class='file-entry'>Name: " + file.name + ", " + file.modifiedTime;
-        output += ", ID: " + file.id.slice(0, 15) + "&hellip;";
-        output += "<button class='file-download-btn' data-driveid='"+file.id+"'>Download File</button></p>";
+        console.log("Downloaded file listing " + JSON.stringify(file));
+        output += "<p class='file-entry'> title: " + wrapProperty(file.title) +
+                                    "<br>modifiedDate: " + wrapProperty(file.modifiedDate) +
+                                    "<br>id: " + wrapProperty(file.id) +
+                                    "<br>fileSize: " + wrapProperty(file.fileSize) +
+                                    "<br>embedLink: " + wrapProperty(file.embedLink) +
+                                    "<br>fileExtension: " + wrapProperty(file.fileExtension) +
+                                    "<br>mimeType: " + wrapProperty(file.mimeType) +
+                                    "<br>isFolder: " + wrapProperty(file.isFolder);
+        output += "<br><button class='file-download-btn' data-driveid='"+file.id+"'>Download File</button></p>";
     }
     output += "</div>";
     return output;

@@ -87,6 +87,10 @@ h1 {
     border: 1px black solid;
 }
 
+.file-property {
+    font-weight: bolder;
+}
+
 .drive-result {
     max-width: 100%;
     text-align: left;

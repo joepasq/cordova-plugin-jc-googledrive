@@ -358,10 +358,10 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                                 }
                                 Log.i(TAG, "Determined " + mimeType + " to be MIME of file");
 
-                                String fname = fPathURI.getLastPathSegment();
+                                String filename = fPathURI.getLastPathSegment();
                                 MetadataChangeSet metadataChangeSet = new MetadataChangeSet.Builder()
                                         .setMimeType(mimeType)
-                                        .setTitle(fname)
+                                        .setTitle(filename)
                                         .build();
 
                                 destinationDirectory
@@ -417,7 +417,16 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                         JSONArray response = new JSONArray();
                         for (Metadata file: flist) {
                             try {
-                                response.put(new JSONObject().put("name", file.getTitle()).put("modifiedTime", file.getCreatedDate().toString()).put("id", file.getDriveId()));
+                                response.put(new JSONObject()
+                                    .put("title", file.getTitle())
+                                    .put("modifiedDate", file.getModifiedDate().toString())
+                                    .put("id", file.getDriveId())
+                                    .put("fileSize", file.getFileSize())
+                                    .put("embedLink", file.getEmbedLink())
+                                    .put("fileExtension", file.getFileExtension())
+                                    .put("isFolder", file.isFolder())
+                                    .put("mimeType", file.getMimeType())
+                                );
                             }catch (JSONException ex){}
                         }
                         JSONObject flistJSON = new JSONObject();
@@ -524,9 +533,14 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
             for (Metadata file: flist) {
               try {
                 response.put(new JSONObject()
-                  .put("name", file.getTitle())
-                  .put("modifiedTime", file.getCreatedDate().toString())
-                  .put("id", file.getDriveId())
+                    .put("title", file.getTitle())
+                    .put("modifiedDate", file.getModifiedDate().toString())
+                    .put("id", file.getDriveId())
+                    .put("fileSize", file.getFileSize())
+                    .put("embedLink", file.getEmbedLink())
+                    .put("fileExtension", file.getFileExtension())
+                    .put("isFolder", file.isFolder())
+                    .put("mimeType", file.getMimeType())
                 );
               } catch (JSONException ex) {
                 PluginResult bridgeResult = new PluginResult(PluginResult.Status.ERROR, ex.getLocalizedMessage());
@@ -549,10 +563,10 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
 
     /**
      * Defaults to root directory for empty string or null parentIds (without any appFolder flags).
-     * @param name the new folder's name
+     * @param title the new folder's title
      * @param parentId the parent folder above the new one
      */
-    private void addFolder(final String name, final String parentId) {
+    private void addFolder(final String title, final String parentId) {
         DriveFolder destinationParent;
         if (parentId == null || parentId.isEmpty()) {
             destinationParent = Drive.DriveApi.getRootFolder(mGoogleApiClient);
@@ -563,7 +577,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
         MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
                 .setMimeType(DriveFolder.MIME_TYPE)
                 .setStarred(true)
-                .setTitle(name)
+                .setTitle(title)
                 .build();
         destinationParent
             .createFolder(mGoogleApiClient, changeSet)
@@ -571,7 +585,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                 @Override
                 public void onResult(DriveFolderResult driveResult) {
                     if (!driveResult.getStatus().isSuccess()) {
-                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to create a new folder with name '" + name + "'"));
+                        mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR,"failed to create a new folder with title '" + title + "'"));
                         return;
                     }
 
@@ -581,7 +595,7 @@ public class GoogleDrive extends CordovaPlugin implements GoogleApiClient.Connec
                     try {
 //                        DriveFile folderAsFile = folder.getDriveId().asDriveFile(); // TODO include folder metadata when returning this success result
                         response.put("status", driveResult.getStatus());
-//                        response.put(new JSONObject().put("name", folderAsFile.getTitle()).put("modifiedTime", folderAsFile.getCreatedDate().toString()).put("id", folderAsFile.getDriveId()));
+//                        response.put(new JSONObject().put("title", folderAsFile.getTitle()).put("modifiedDate", folderAsFile.getModifiedDate().toString()).put("id", folderAsFile.getDriveId()));
                     } catch (JSONException ex) {
                         Log.i(TAG, "cordova-plugin-jc-googledrive -> todo log this exception in JS land as well " + ex.getLocalizedMessage());
                     }
