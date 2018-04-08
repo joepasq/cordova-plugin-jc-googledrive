@@ -6,7 +6,7 @@
 
 
 static NSString *kClientID = @"";
-static NSString *kRedirectURI =@":/oauthredirect";
+static NSString *kRedirectURI = @":/oauthredirect";
 static NSString *kAuthorizerKey = @"";
 
 @interface GoogleDrive () <OIDAuthStateChangeDelegate,OIDAuthStateErrorDelegate>
@@ -56,12 +56,12 @@ static NSString *kAuthorizerKey = @"";
 {
     NSString* path = [command.arguments objectAtIndex:0];
     BOOL appfolder = [[command.arguments objectAtIndex:1] boolValue];
-    if([path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length>0){
+    if ([path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length > 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if(self.authorization.canAuthorize){
-                    [self uploadAFile:command fpath:path appFolder:appfolder];
-                    NSLog(@"Already authorized app. No need to ask user again");
-            } else{
+            if (self.authorization.canAuthorize) {
+				[self uploadAFile:command fpath:path appFolder:appfolder];
+				NSLog(@"Already authorized app. No need to ask user again");
+            } else {
                 [self runSigninThenHandler:command onComplete:^{
                     [self uploadAFile:command fpath:path appFolder:appfolder];
                 }];
@@ -91,21 +91,21 @@ static NSString *kAuthorizerKey = @"";
     });
 }
 
-- (void)deleteFile:(CDVInvokedUrlCommand*)command{
+- (void)deleteFile:(CDVInvokedUrlCommand*)command {
 
     NSString* fileid = [command.arguments objectAtIndex:0];
-    if([fileid stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length>0){
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if(self.authorization.canAuthorize){
-                    [self deleteSelectedFile:command fid:fileid];
-                    NSLog(@"Already authorized app. No need to ask user again");
-                } else{
-                    [self runSigninThenHandler:command onComplete:^{
-                        [self deleteSelectedFile:command fid:fileid];
-                    }];
-                }
+    if ([fileid stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length > 0) {
+		dispatch_async(dispatch_get_main_queue(), ^{
+			if (self.authorization.canAuthorize) {
+				[self deleteSelectedFile:command fid:fileid];
+				NSLog(@"Already authorized app. No need to ask user again");
+			} else {
+				[self runSigninThenHandler:command onComplete:^{
+					[self deleteSelectedFile:command fid:fileid];
+				}];
+			}
         });
-    } else{
+    } else {
         [self.commandDelegate sendPluginResult:[CDVPluginResult
                                                 resultWithStatus:CDVCommandStatus_ERROR
                                                 messageAsString:@"One of the parameters is empty"]
@@ -153,8 +153,9 @@ static NSString *kAuthorizerKey = @"";
     GTLRDriveQuery_FilesList *query = [GTLRDriveQuery_FilesList query];
 
     query.fields = @"nextPageToken,files(id,name,trashed,modifiedTime)";
-    if(appfolder)
+	if (appfolder) {
         query.spaces = @"appDataFolder";
+	}
 
     //query.orderBy=@"modifiedDate";
 
@@ -215,37 +216,36 @@ static NSString *kAuthorizerKey = @"";
     backUpFile.name = [fpath lastPathComponent];
     //NSLog(@"%@", backUpFile.name);
 
-    GTLRDriveQuery_FilesCreate *query =
-    [GTLRDriveQuery_FilesCreate queryWithObject:backUpFile
-                               uploadParameters:uploadParameters];
+    GTLRDriveQuery_FilesCreate *query = [GTLRDriveQuery_FilesCreate queryWithObject:backUpFile
+																   uploadParameters:uploadParameters];
 
     //TODO: show native progress indicator
-    query.executionParameters.uploadProgressBlock = ^(GTLRServiceTicket *callbackTicket,
-                                                      unsigned long long numberOfBytesRead,
-                                                      unsigned long long dataLength) {
-        //double maxValue = (double)dataLength;
-        //double doubleValue = (double)numberOfBytesRead;
-    };
+//    query.executionParameters.uploadProgressBlock = ^(GTLRServiceTicket *callbackTicket,
+//                                                      unsigned long long numberOfBytesRead,
+//                                                      unsigned long long dataLength) {
+//        double maxValue = (double)dataLength;
+//        double doubleValue = (double)numberOfBytesRead;
+//    };
 
-    [service executeQuery:query
-        completionHandler:^(GTLRServiceTicket *callbackTicket,
-                            GTLRDrive_File *uploadedFile,
-                            NSError *callbackError) {
-
-            //NSLog(@"%@", NSStringFromClass([uploadedFile class]));
-            CDVPluginResult* pluginResult = nil;
-            if (callbackError == nil) {
-                NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
-                [result setObject:@"File uploaded succesfully!" forKey:@"message"];
-                [result setObject:[NSString stringWithFormat:@"%@", [NSDate date]] forKey:@"created_date"];
-                [result setObject:[uploadedFile identifier] forKey:@"fileId"];
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
-            } else {
-                [callbackTicket cancelTicket];
-                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[callbackError localizedDescription]];
-            }
-            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-        }];
+	[service executeQuery:query
+		completionHandler:^(GTLRServiceTicket *callbackTicket,
+							GTLRDrive_File *uploadedFile,
+							NSError *callbackError) {
+			
+			//NSLog(@"%@", NSStringFromClass([uploadedFile class]));
+			CDVPluginResult* pluginResult = nil;
+			if (callbackError == nil) {
+				NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
+				[result setObject:@"File uploaded succesfully!" forKey:@"message"];
+				[result setObject:[NSString stringWithFormat:@"%@", [NSDate date]] forKey:@"created_date"];
+				[result setObject:[uploadedFile identifier] forKey:@"fileId"];
+				pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
+			} else {
+				[callbackTicket cancelTicket];
+				pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[callbackError localizedDescription]];
+			}
+			[self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+		}];
 }
 
 - (void)deleteSelectedFile:(CDVInvokedUrlCommand*)command fid:(NSString*) fileid{
@@ -265,7 +265,7 @@ static NSString *kAuthorizerKey = @"";
     }];
 }
 
-- (void)createAFolder:(CDVInvokedUrlCommand*)command dirName:(NSString*) title{
+- (void)createAFolder:(CDVInvokedUrlCommand *)command dirName:(NSString *)title {
     GTLRDriveService *service = self.driveService;
 
     GTLRDrive_File *folderObj = [GTLRDrive_File object];
