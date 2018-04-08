@@ -19,6 +19,18 @@
         <allow-intent href="market:*" />
     </platform>
     <platform name="ios">
+        <preference default="" name="CAMERA_USAGE_DESCRIPTION" />
+        <config-file parent="NSCameraUsageDescription" target="*-Info.plist">
+            <string>Please allow camera access while developing.</string>
+        </config-file>
+        <preference default="" name="PHOTOLIBRARY_USAGE_DESCRIPTION" />
+        <config-file parent="NSPhotoLibraryUsageDescription" target="*-Info.plist">
+            <string>Please allow camera access while developing.</string>
+        </config-file>
+        <preference default="" name="PHOTOLIBRARY_ADD_USAGE_DESCRIPTION" />
+        <config-file parent="NSPhotoLibraryAddUsageDescription" target="*-Info.plist">
+            <string>Please allow photo library access while developing.</string>
+        </config-file>
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
     </platform>

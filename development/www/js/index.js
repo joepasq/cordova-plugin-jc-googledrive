@@ -130,8 +130,11 @@ var app = {
         var resultElement = document.getElementsByClassName('drive-result')[0];
         resultElement.innerHTML = "C.1 Capturing image&hellip;";
 
-        var captureError = function(message) {
-            triage("C.2 Failed to take image:<br>" + JSON.stringify(message));
+        var captureError = function(error) {
+            if (error.code == 20) {
+                error.message = "Cannot access camera to capture media (try on a physical iOS device).";
+            }
+            triage("C.2 Failed to take image:<br>" + JSON.stringify(error));
         };
 
         var captureSuccess = function(mediaFiles) {
