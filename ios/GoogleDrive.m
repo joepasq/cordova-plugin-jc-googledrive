@@ -17,8 +17,8 @@ static NSString *kAuthorizerKey = @"";
 @implementation GoogleDrive {}
 
 - (void)pluginInitialize {
-    kAuthorizerKey = [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString*)kCFBundleNameKey];
-    NSLog(@"%@",kAuthorizerKey);
+    kAuthorizerKey = [[[NSBundle mainBundle] infoDictionary] objectForKey:(NSString *)kCFBundleNameKey];
+    NSLog(@"%@", kAuthorizerKey);
     NSMutableArray *ids = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleURLTypes"];
     NSArray *reversedClientId = [ids filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"CFBundleURLName == %@", @"reversedClientId"]];
     NSArray *clientId = [ids filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"CFBundleURLName == %@", @"clientId"]];
@@ -36,7 +36,7 @@ static NSString *kAuthorizerKey = @"";
     NSString* fileid = [command.arguments objectAtIndex:1];
     if ([destPath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length > 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.authorization.canAuthorize) {
+            if (self.authorization.canAuthorize && self.authorization.authState.lastAuthorizationResponse.accessToken != nil) {
 				[self downloadAFile:command destPath:destPath fid:fileid];
 				NSLog(@"Already authorized app. No need to ask user again");
             } else {
@@ -59,7 +59,7 @@ static NSString *kAuthorizerKey = @"";
     BOOL appfolder = [[command.arguments objectAtIndex:1] boolValue];
     if ([path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length > 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.authorization.canAuthorize) {
+            if (self.authorization.canAuthorize && self.authorization.authState.lastAuthorizationResponse.accessToken != nil) {
 				[self uploadAFile:command fpath:path appFolder:appfolder];
 				NSLog(@"Already authorized app. No need to ask user again");
             } else {
@@ -77,14 +77,14 @@ static NSString *kAuthorizerKey = @"";
 
 }
 
-- (void)fileList:(CDVInvokedUrlCommand*)command{
+- (void)fileList:(CDVInvokedUrlCommand*)command {
 
     BOOL appfolder = [[command.arguments objectAtIndex:0] boolValue];
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (self.authorization.canAuthorize) {
+        if (self.authorization.canAuthorize && self.authorization.authState.lastAuthorizationResponse.accessToken != nil) {
             [self fetchFileList:command appFolder:appfolder];
             NSLog(@"Already authorized app. No need to ask user again");
-        } else {
+		} else {
             [self runSigninThenHandler:command onComplete:^{
                 [self fetchFileList:command appFolder:appfolder];
             }];
@@ -97,7 +97,7 @@ static NSString *kAuthorizerKey = @"";
     NSString* fileid = [command.arguments objectAtIndex:0];
     if ([fileid stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length > 0) {
 		dispatch_async(dispatch_get_main_queue(), ^{
-			if (self.authorization.canAuthorize) {
+			if (self.authorization.canAuthorize && self.authorization.authState.lastAuthorizationResponse.accessToken != nil) {
 				[self deleteSelectedFile:command fid:fileid];
 				NSLog(@"Already authorized app. No need to ask user again");
 			} else {
@@ -226,8 +226,8 @@ static NSString *kAuthorizerKey = @"";
         newFileResource.parents = @[@"appDataFolder"];
 	}
     newFileResource.name = [fpath lastPathComponent];
-	newFileResource.mimeType = discoveredMimeType;
-    //NSLog(@"%@", backUpFile.name);
+    newFileResource.mimeType = discoveredMimeType;
+    //NSLog(@"%@", newFileResource.name);
 
     GTLRDriveQuery_FilesCreate *query = [GTLRDriveQuery_FilesCreate queryWithObject:newFileResource
 																   uploadParameters:uploadParameters];
@@ -335,7 +335,7 @@ static NSString *kAuthorizerKey = @"";
                                                                                                   self.driveService.authorizer = authorization;
                                                                                                   NSLog(@"Got authorization tokens. Access token: %@",
                                                                                                         authState.lastTokenResponse.accessToken);
-                                                                                                  if (handler) handler();
+																								  if (handler) { handler(); }
                                                                                               } else {
                                                                                                   [self setGtmAuthorization:nil];
                                                                                                   [self.commandDelegate sendPluginResult:                                                                                                   [CDVPluginResult resultWithStatus:                                                                                                CDVCommandStatus_ERROR messageAsString:[error localizedDescription]] callbackId:command.callbackId];                                                                                                NSLog(@"Authorization error: %@", [error localizedDescription]);
@@ -348,6 +348,8 @@ static NSString *kAuthorizerKey = @"";
         return;
     }
     _authorization = authorization;
+	_authorization.authState.errorDelegate = self;
+	_authorization.authState.stateChangeDelegate = self;
     [self stateChanged];
 }
 
