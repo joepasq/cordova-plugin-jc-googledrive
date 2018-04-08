@@ -173,7 +173,7 @@ static NSString *kAuthorizerKey = @"";
             CDVPluginResult* pluginResult = nil;
             if (callbackError == nil) {
                 NSMutableDictionary *result = [[NSMutableDictionary alloc] init];
-                [result setObject:@"Retrived file list succesfully!" forKey:@"message"];
+                [result setObject:@"Retrieved file list succesfully!" forKey:@"message"];
                 [result setObject:res forKey:@"flist"];
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
             } else {
@@ -185,7 +185,7 @@ static NSString *kAuthorizerKey = @"";
 }
 
 
--(void)uploadAFile:(CDVInvokedUrlCommand*)command fpath:(NSString*) fpath appFolder:(BOOL)appfolder{
+-(void)uploadAFile:(CDVInvokedUrlCommand *)command fpath:(NSString *)fpath appFolder:(BOOL)appfolder {
 
     NSURL *fileToUploadURL = [NSURL fileURLWithPath:fpath];
     NSLog(@"%@", fileToUploadURL);
@@ -194,6 +194,7 @@ static NSString *kAuthorizerKey = @"";
     if (![fileToUploadURL checkPromisedItemIsReachableAndReturnError:&fileError]) {
         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[@"No Local File Found: " stringByAppendingString:fpath]]
                                     callbackId:command.callbackId];
+		return;
     }
     //NSString *libs = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex: 0];
     //NSLog(@"Detected Library path: %@", libs);
